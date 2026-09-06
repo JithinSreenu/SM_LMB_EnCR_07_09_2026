@@ -1,0 +1,2119 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedograph</title>
+<style>
+/* PEDOGRAPH — professional instrument theme (dark default + light) */
+:root, :root[data-theme="dark"] {
+  --bg: #101418;
+  --panel: #151a20;
+  --card: #1a2028;
+  --inset: #11151a;
+  --border: #2a323c;
+  --border-soft: #222a33;
+  --text: #d9e1e9;
+  --dim: #8b96a3;
+  --faint: #5d6875;
+  --accent: #3b82f6;
+  --accent-soft: rgba(59, 130, 246, 0.12);
+  --ch1: #4f8ff7;
+  --ch2: #e09145;
+  --ok: #34b37a;
+  --ok-soft: rgba(52, 179, 122, 0.12);
+  --danger: #e5484d;
+  --danger-soft: rgba(229, 72, 77, 0.10);
+  --warn: #d9a13b;
+  --warn-soft: rgba(217, 161, 59, 0.12);
+  --grid: rgba(148, 163, 184, 0.10);
+  --axistext: #7d8894;
+  --ceil: #d9a13b;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --radius: 6px;
+}
+:root[data-theme="light"] {
+  --bg: #edf0f3;
+  --panel: #ffffff;
+  --card: #f5f7fa;
+  --inset: #eef1f5;
+  --border: #d8dfe7;
+  --border-soft: #e5eaf0;
+  --text: #1d2733;
+  --dim: #647182;
+  --faint: #98a3b1;
+  --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, 0.08);
+  --ch1: #2563eb;
+  --ch2: #c26a1b;
+  --ok: #15803d;
+  --ok-soft: rgba(21, 128, 61, 0.08);
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.07);
+  --warn: #b45309;
+  --warn-soft: rgba(180, 83, 9, 0.08);
+  --grid: rgba(30, 45, 70, 0.08);
+  --axistext: #7b8794;
+  --ceil: #b45309;
+  --shadow: 0 1px 2px rgba(30, 45, 70, 0.08);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+.bg-grid, .bg-scanline, .bg-vignette { display: none; }
+/* ─── Header ─── */
+.header {
+  height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon {
+  width: 30px; height: 30px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700;
+}
+.logo-text {
+  font-size: 13px; font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text);
+}
+.logo-sub {
+  font-size: 10px; color: var(--dim);
+  letter-spacing: 0.4px;
+}
+.header-center { display: flex; align-items: center; gap: 6px; }
+.header-right { display: flex; align-items: center; gap: 6px; }
+/* ─── Buttons ─── */
+.btn {
+  font-family: inherit;
+  font-weight: 600; font-size: 11px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  letter-spacing: 0.6px;
+  transition: background 0.12s, border-color 0.12s;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.btn-glow { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.btn-glow:hover { background: var(--accent-soft); }
+.btn-start { border-color: var(--ok); color: var(--ok); background: var(--ok-soft); }
+.btn-start:hover { color: var(--ok); border-color: var(--ok); }
+.btn-stop { border-color: var(--danger); color: var(--danger); background: var(--danger-soft); }
+.btn-stop:hover { color: var(--danger); border-color: var(--danger); }
+.btn-serial { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.btn-serial:hover { color: var(--accent); }
+.btn-serial.connected { border-color: var(--ok); color: var(--ok); background: var(--ok-soft); }
+/* ─── Status dot ─── */
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+}
+.status-dot.off { background: var(--danger); }
+/* ─── Main layout ─── */
+.main {
+  display: grid;
+  grid-template-columns: 296px 1fr 328px;
+  height: calc(100vh - 52px);
+}
+/* ─── Panels ─── */
+.panel {
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.panel-right { border-right: none; border-left: 1px solid var(--border); }
+/* ─── Section headers ─── */
+.section-head {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.6px;
+  color: var(--dim);
+  padding: 12px 14px 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-head::after {
+  content: '';
+  flex: 1; height: 1px;
+  background: var(--border-soft);
+}
+/* ─── Presets ─── */
+.presets-wrap {
+  padding: 6px 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.preset {
+  padding: 9px 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.preset:hover { border-color: var(--accent); }
+.preset.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.preset-icon { display: none; }
+.preset-name {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.4px;
+}
+/* ─── Cards ─── */
+.ch-card, .gait-card, .serial-card, .live-data-card, .steps-card, .out-card {
+  margin: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.ch-card.ch1 { border-top: 2px solid var(--ch1); }
+.ch-card.ch2 { border-top: 2px solid var(--ch2); }
+.ch-card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.ch-card-title { font-size: 12px; font-weight: 700; letter-spacing: 0.8px; }
+.ch1-color { color: var(--ch1); }
+.ch2-color { color: var(--ch2); }
+.ch-toggle { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--dim); }
+.ch-toggle input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none;
+  width: 32px; height: 17px;
+  border-radius: 9px;
+  background: var(--inset);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s;
+}
+.ch-toggle input[type="checkbox"]::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: var(--faint);
+  transition: left 0.15s, background 0.15s;
+}
+.ch-toggle input[type="checkbox"]:checked { background: var(--ok-soft); border-color: var(--ok); }
+.ch-toggle input[type="checkbox"]:checked::after { left: 17px; background: var(--ok); }
+.ch-card-body { padding: 10px 12px; }
+/* ─── Sliders ─── */
+.slider-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 62px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+.slider-label {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 10px;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.slider-val {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 11px;
+  color: var(--text);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.slider-val .unit { color: var(--faint); font-size: 10px; }
+input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--ch1);
+  cursor: pointer;
+  border: 2px solid var(--panel);
+  box-shadow: 0 0 0 1px var(--ch1);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: var(--ch1);
+  cursor: pointer;
+  border: 2px solid var(--panel);
+}
+.ch2 input[type="range"]::-webkit-slider-thumb { background: var(--ch2); box-shadow: 0 0 0 1px var(--ch2); }
+.ch2 input[type="range"]::-moz-range-thumb { background: var(--ch2); }
+select {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--inset);
+  color: var(--text);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 11px;
+  outline: none;
+  cursor: pointer;
+}
+select:focus { border-color: var(--accent); }
+.wave-badge {
+  font-size: 9px; font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.8px;
+  text-align: center;
+}
+.wave-badge.ch1 { background: var(--accent-soft); color: var(--ch1); border: 1px solid var(--ch1); }
+.wave-badge.ch2 { background: rgba(224, 145, 69, 0.12); color: var(--ch2); border: 1px solid var(--ch2); }
+.mini-wave {
+  height: 34px;
+  background: var(--inset);
+  border-radius: 5px;
+  margin-top: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+}
+.mini-wave canvas { width: 100%; height: 100%; display: block; }
+/* ─── Output ceiling card ─── */
+.out-card .section-head { color: var(--warn); }
+.out-note {
+  padding: 0 12px 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--dim);
+}
+.mirror-pill {
+  margin: 0 12px 10px;
+  padding: 7px 10px;
+  border-radius: 5px;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.4px;
+  border: 1px solid var(--border);
+  color: var(--dim);
+  background: var(--inset);
+  display: flex; align-items: center; gap: 8px;
+}
+.mirror-pill .mp-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex-shrink: 0; }
+.mirror-pill.linked { border-color: var(--ok); color: var(--ok); background: var(--ok-soft); }
+.mirror-pill.linked .mp-dot { background: var(--ok); }
+/* ─── Serial ─── */
+.serial-card .section-head { color: var(--dim); }
+.serial-body { padding: 10px 12px; }
+.serial-status {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px;
+  border-radius: 5px;
+  background: var(--inset);
+  border: 1px solid var(--border-soft);
+  margin-bottom: 8px;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 11px;
+  color: var(--dim);
+}
+.serial-status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--danger); flex-shrink: 0; }
+.serial-status.connected { border-color: var(--ok); color: var(--text); }
+.serial-status.connected .dot { background: var(--ok); }
+.serial-btns { display: flex; gap: 6px; margin-bottom: 8px; }
+.serial-btns .btn { flex: 1; font-size: 10px; padding: 6px 8px; }
+.port-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.port-label {
+  font-size: 10px; font-weight: 700;
+  color: var(--dim);
+  letter-spacing: 0.8px;
+  width: 42px;
+  flex-shrink: 0;
+}
+.port-select {
+  flex: 1;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--inset);
+  color: var(--text);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 11px;
+  outline: none;
+}
+.port-select:focus { border-color: var(--accent); }
+.port-refresh { padding: 6px 9px; font-size: 11px; }
+.esp-btn-grid { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.esp-btn-row { display: flex; gap: 6px; }
+.esp-btn { flex: 1; font-size: 10px; padding: 6px 4px; letter-spacing: 0.4px; text-transform: uppercase; }
+.esp-btn.esp-start { border-color: var(--ok); color: var(--ok); background: var(--ok-soft); }
+.esp-btn.esp-stop { border-color: var(--danger); color: var(--danger); background: var(--danger-soft); }
+.esp-btn.esp-preset { font-size: 10px; }
+.esp-section-label {
+  font-size: 9px; font-weight: 700;
+  color: var(--faint);
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  padding: 4px 0 0;
+}
+.serial-terminal {
+  background: #0d1117;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 8px;
+  height: 130px;
+  overflow-y: auto;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: #c9d4e0;
+}
+:root[data-theme="light"] .serial-terminal { background: #10151c; }
+.terminal-line { margin-bottom: 1px; word-break: break-all; }
+.terminal-line.sent { color: #6cb2f5; }
+.terminal-line.received { color: #7bd9a4; }
+.terminal-line.error { color: #f08a8e; }
+.terminal-line.info { color: #7d8894; }
+.serial-cmd-input { display: flex; gap: 6px; margin-top: 8px; }
+.serial-cmd-input input {
+  flex: 1;
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--inset);
+  color: var(--text);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 11px;
+  outline: none;
+}
+.serial-cmd-input input:focus { border-color: var(--accent); }
+/* ─── Live data ─── */
+.live-data-card .section-head { color: var(--dim); }
+.live-values { padding: 10px 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.live-box {
+  background: var(--inset);
+  border-radius: 6px;
+  padding: 10px;
+  text-align: center;
+  border: 1px solid var(--border-soft);
+}
+.live-box-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 5px; color: var(--dim); }
+.live-box-label.ch1 { color: var(--ch1); }
+.live-box-label.ch2 { color: var(--ch2); }
+.live-box-value {
+  font-size: 22px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+.live-box-value.ch1 { color: var(--ch1); }
+.live-box-value.ch2 { color: var(--ch2); }
+.live-box-unit { font-family: ui-monospace, Consolas, monospace; font-size: 10px; color: var(--faint); }
+.live-src {
+  padding: 0 12px 8px;
+  font-size: 10px;
+  color: var(--faint);
+  letter-spacing: 0.3px;
+}
+.gait-phases-bar { display: flex; gap: 4px; padding: 0 12px 12px; }
+.gait-phase-tag {
+  flex: 1;
+  padding: 5px 2px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.6px;
+  background: var(--inset);
+  color: var(--faint);
+  border: 1px solid var(--border-soft);
+}
+.gait-phase-tag.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+/* ─── Steps ─── */
+.steps-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 10px 12px 12px; }
+.step-item {
+  text-align: center;
+  background: var(--inset);
+  border-radius: 6px;
+  padding: 9px 4px;
+  border: 1px solid var(--border-soft);
+}
+.step-label {
+  font-size: 9px; font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--faint);
+  margin-bottom: 5px;
+}
+.step-value {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 17px; font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+/* ─── Quick commands ─── */
+.quick-cmds { padding: 6px 12px; display: flex; flex-wrap: wrap; gap: 5px; }
+.quick-cmd {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 10px;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--inset);
+  color: var(--dim);
+  cursor: pointer;
+}
+.quick-cmd:hover { border-color: var(--accent); color: var(--accent); }
+/* ─── Center viz ─── */
+.viz-area { display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+.viz-toolbar {
+  padding: 8px 14px;
+  display: flex; align-items: center; gap: 6px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.viz-toolbar .spacer { flex: 1; }
+.view-btn {
+  font-size: 10px; font-weight: 600;
+  padding: 5px 11px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+.view-btn:hover { border-color: var(--accent); color: var(--accent); }
+.view-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.time-badge {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 11px; font-weight: 600;
+  color: var(--text);
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--inset);
+  font-variant-numeric: tabular-nums;
+}
+.canvas-wrap { flex: 1; position: relative; background: var(--bg); }
+.canvas-wrap canvas { width: 100%; height: 100%; display: block; }
+/* ─── Status bar ─── */
+.status-bar {
+  padding: 7px 14px;
+  display: flex; align-items: center; gap: 18px;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 11px;
+}
+.status-item { display: flex; align-items: center; gap: 6px; }
+.status-label { color: var(--faint); }
+.status-val { font-weight: 600; font-variant-numeric: tabular-nums; }
+.status-val.ch1 { color: var(--ch1); }
+.status-val.ch2 { color: var(--ch2); }
+.status-val.gait { color: var(--text); }
+/* ─── Modal ─── */
+.modal-bg {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0, 0, 0, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.modal-bg.show { display: flex; }
+.modal-box {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 22px;
+  max-width: 640px; width: 92%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+.modal-box h3 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 14px; letter-spacing: 0.3px; }
+.modal-box textarea {
+  width: 100%; height: 260px;
+  background: var(--inset);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  padding: 10px;
+  resize: vertical;
+  outline: none;
+}
+.modal-box textarea:focus { border-color: var(--accent); }
+.modal-btns { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
+/* ─── Help ─── */
+.help-section { margin-bottom: 14px; }
+.help-section h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--accent); margin-bottom: 6px; }
+.help-section p, .help-section li { font-size: 12.5px; line-height: 1.65; color: var(--dim); }
+.help-section ul { padding-left: 18px; }
+.help-section li { margin-bottom: 3px; }
+.help-section strong { color: var(--text); }
+.help-section code { font-family: ui-monospace, Consolas, monospace; font-size: 11px; background: var(--inset); border: 1px solid var(--border-soft); border-radius: 3px; padding: 0 4px; }
+.btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+/* ─── Responsive ─── */
+@media (max-width: 1100px) {
+  .main { grid-template-columns: 260px 1fr 290px; }
+}
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+  .panel { max-height: 35vh; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-scanline"></div>
+<div class="bg-vignette"></div>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">P</div>
+    <div>
+      <div class="logo-text">PEDOGRAPH</div>
+      <div class="logo-sub">Dual Waveform Console · ESP32 · v2.0</div>
+    </div>
+  </div>
+
+  <div class="header-center">
+    <button class="btn btn-start" id="btnStart" onclick="toggleOutput()">START</button>
+    <button class="btn btn-stop" id="btnStop" onclick="stopOutput()">STOP</button>
+    <button class="btn" id="btnZero" onclick="zeroOutput()" title="Hold both outputs at 0 V">ZERO</button>
+    <button class="btn" onclick="resetCounters()" title="Reset time and counters">RESET</button>
+  </div>
+
+  <div class="header-right">
+    <button class="btn" onclick="exportCSV()">Export CSV</button>
+    <button class="btn" id="btnTheme" onclick="toggleTheme()" title="Switch light / dark theme">Theme: Dark</button>
+    <button class="btn" onclick="showHelp()">Help</button>
+  </div>
+</div>
+
+<!-- ═══════════════ MAIN 3-COLUMN ═══════════════ -->
+<div class="main">
+
+  <!-- ════ LEFT PANEL ════ -->
+  <div class="panel">
+
+    <!-- Presets -->
+    <div class="section-head">Presets</div>
+    <div class="presets-wrap">
+      <div class="preset" data-preset="walk" onclick="applyPreset('walk')">
+        <span class="preset-name">Walk</span>
+      </div>
+      <div class="preset" data-preset="run" onclick="applyPreset('run')">
+        <span class="preset-name">Run</span>
+      </div>
+      <div class="preset" data-preset="jog" onclick="applyPreset('jog')">
+        <span class="preset-name">Jog</span>
+      </div>
+      <div class="preset" data-preset="limp" onclick="applyPreset('limp')">
+        <span class="preset-name">Limp</span>
+      </div>
+      <div class="preset" data-preset="stair" onclick="applyPreset('stair')">
+        <span class="preset-name">Stair</span>
+      </div>
+      <div class="preset" data-preset="climb" onclick="applyPreset('climb')">
+        <span class="preset-name">Climb</span>
+      </div>
+      <div class="preset" data-preset="stand" onclick="applyPreset('stand')">
+        <span class="preset-name">Stand</span>
+      </div>
+      <div class="preset" data-preset="sit" onclick="applyPreset('sit')">
+        <span class="preset-name">Sit</span>
+      </div>
+      <div class="preset" data-preset="test" onclick="applyPreset('test')">
+        <span class="preset-name">Test</span>
+      </div>
+    </div>
+
+    <!-- Channel 1 -->
+    <div class="ch-card ch1" id="ch1Card">
+      <div class="ch-card-head">
+        <span class="ch-card-title ch1-color">CH1 — HEEL</span>
+        <div class="ch-toggle">
+          <input type="checkbox" id="ch1Enabled" checked onchange="updateChannel('ch1')">
+          <span>ON</span>
+        </div>
+      </div>
+      <div class="ch-card-body">
+        <div class="slider-row">
+          <span class="slider-label">Type</span>
+          <select id="ch1Type" onchange="updateChannel('ch1')">
+            <option value="0">Sine</option>
+            <option value="1">Square</option>
+            <option value="2">Triangle</option>
+            <option value="3">Ramp Up</option>
+            <option value="4">Ramp Down</option>
+            <option value="5">PWM</option>
+            <option value="6" selected>Gait</option>
+            <option value="7">Custom</option>
+            <option value="8">Off</option>
+          </select>
+          <span class="wave-badge ch1" id="ch1Badge">GAIT</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Freq</span>
+          <input type="range" id="ch1Freq" min="0.01" max="100" step="0.01" value="0.91" oninput="updateChannel('ch1')">
+          <span class="slider-val" id="ch1FreqVal">0.91<span class="unit"> Hz</span></span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Amp</span>
+          <input type="range" id="ch1Amp" min="0" max="1.65" step="0.01" value="1.65" oninput="updateChannel('ch1')">
+          <span class="slider-val" id="ch1AmpVal">1.65<span class="unit"> V</span></span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Offset</span>
+          <input type="range" id="ch1Offset" min="0" max="3.3" step="0.01" value="1.65" oninput="updateChannel('ch1')">
+          <span class="slider-val" id="ch1OffsetVal">1.65<span class="unit"> V</span></span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Duty</span>
+          <input type="range" id="ch1Duty" min="0" max="1" step="0.01" value="0.5" oninput="updateChannel('ch1')">
+          <span class="slider-val" id="ch1DutyVal">0.50</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Phase</span>
+          <input type="range" id="ch1Phase" min="-180" max="180" step="1" value="0" oninput="updateChannel('ch1')">
+          <span class="slider-val" id="ch1PhaseVal">0<span class="unit">°</span></span>
+        </div>
+        <div class="mini-wave"><canvas id="previewCh1" width="270" height="32"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Channel 2 -->
+    <div class="ch-card ch2" id="ch2Card">
+      <div class="ch-card-head">
+        <span class="ch-card-title ch2-color">CH2 — TOE</span>
+        <div class="ch-toggle">
+          <input type="checkbox" id="ch2Enabled" checked onchange="updateChannel('ch2')">
+          <span>ON</span>
+        </div>
+      </div>
+      <div class="ch-card-body">
+        <div class="slider-row">
+          <span class="slider-label">Type</span>
+          <select id="ch2Type" onchange="updateChannel('ch2')">
+            <option value="0">Sine</option>
+            <option value="1">Square</option>
+            <option value="2">Triangle</option>
+            <option value="3">Ramp Up</option>
+            <option value="4">Ramp Down</option>
+            <option value="5">PWM</option>
+            <option value="6" selected>Gait</option>
+            <option value="7">Custom</option>
+            <option value="8">Off</option>
+          </select>
+          <span class="wave-badge ch2" id="ch2Badge">GAIT</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Freq</span>
+          <input type="range" id="ch2Freq" min="0.01" max="100" step="0.01" value="0.91" oninput="updateChannel('ch2')">
+          <span class="slider-val" id="ch2FreqVal">0.91<span class="unit"> Hz</span></span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Amp</span>
+          <input type="range" id="ch2Amp" min="0" max="1.65" step="0.01" value="1.65" oninput="updateChannel('ch2')">
+          <span class="slider-val" id="ch2AmpVal">1.65<span class="unit"> V</span></span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Offset</span>
+          <input type="range" id="ch2Offset" min="0" max="3.3" step="0.01" value="1.65" oninput="updateChannel('ch2')">
+          <span class="slider-val" id="ch2OffsetVal">1.65<span class="unit"> V</span></span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Duty</span>
+          <input type="range" id="ch2Duty" min="0" max="1" step="0.01" value="0.5" oninput="updateChannel('ch2')">
+          <span class="slider-val" id="ch2DutyVal">0.50</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Phase</span>
+          <input type="range" id="ch2Phase" min="-180" max="180" step="1" value="0" oninput="updateChannel('ch2')">
+          <span class="slider-val" id="ch2PhaseVal">0<span class="unit">°</span></span>
+        </div>
+        <div class="mini-wave"><canvas id="previewCh2" width="270" height="32"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Gait Config -->
+    <div class="gait-card">
+      <div class="section-head">Gait Cycle</div>
+      <div style="padding: 6px 10px 10px;">
+        <div class="slider-row">
+          <span class="slider-label">Period</span>
+          <input type="range" id="gaitPeriod" min="0.2" max="5" step="0.01" value="1.1" oninput="updateGait()">
+          <span class="slider-val" id="gaitPeriodVal">1.10<span class="unit"> s</span></span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Swing</span>
+          <input type="range" id="gaitSwing" min="0" max="1" step="0.01" value="0.40" oninput="updateGait()">
+          <span class="slider-val" id="gaitSwingVal">0.40</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Loading</span>
+          <input type="range" id="gaitLoading" min="0" max="1" step="0.01" value="0.10" oninput="updateGait()">
+          <span class="slider-val" id="gaitLoadingVal">0.10</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Mid-Stnc</span>
+          <input type="range" id="gaitMid" min="0" max="1" step="0.01" value="0.25" oninput="updateGait()">
+          <span class="slider-val" id="gaitMidVal">0.25</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Terminal</span>
+          <input type="range" id="gaitTerminal" min="0" max="1" step="0.01" value="0.15" oninput="updateGait()">
+          <span class="slider-val" id="gaitTerminalVal">0.15</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Pre-Swn</span>
+          <input type="range" id="gaitPreSwing" min="0" max="1" step="0.01" value="0.10" oninput="updateGait()">
+          <span class="slider-val" id="gaitPreSwingVal">0.10</span>
+        </div>
+        <div style="height:1px;background:var(--border);margin:6px 0;"></div>
+        <div class="slider-row">
+          <span class="slider-label">Vmin</span>
+          <input type="range" id="gaitVmin" min="0" max="3.3" step="0.01" value="0.20" oninput="updateGait()">
+          <span class="slider-val" id="gaitVminVal">0.20<span class="unit"> V</span></span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Vmax</span>
+          <input type="range" id="gaitVmax" min="0" max="3.3" step="0.01" value="3.00" oninput="updateGait()">
+          <span class="slider-val" id="gaitVmaxVal">3.00<span class="unit"> V</span></span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Heel/Toe</span>
+          <input type="range" id="gaitRatio" min="0" max="1" step="0.01" value="0.60" oninput="updateGait()">
+          <span class="slider-val" id="gaitRatioVal">0.60</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Output Limits -->
+    <div class="out-card">
+      <div class="section-head">Output Limits</div>
+      <div style="padding: 4px 12px 2px;">
+        <div class="slider-row">
+          <span class="slider-label">Ceiling</span>
+          <input type="range" id="outCeil" min="0.5" max="3.3" step="0.01" value="3.30" oninput="updateCeiling()">
+          <span class="slider-val" id="outCeilVal">3.30<span class="unit"> V</span></span>
+        </div>
+      </div>
+      <div class="mirror-pill" id="mirrorPill"><span class="mp-dot"></span><span id="mirrorPillText">Standalone &mdash; connect a device to mirror output</span></div>
+      <div class="out-note">The graph shows the exact output levels. When connected, every control is sent to the ESP32 automatically. All values are clamped to the ceiling before display and before sending.</div>
+    </div>
+  </div>
+
+  <!-- ════ CENTER: VISUALIZATION ════ -->
+  <div class="viz-area">
+    <div class="viz-toolbar">
+      <button class="view-btn active" id="btnViewDual" onclick="setView('dual')">Dual</button>
+      <button class="view-btn" id="btnViewCH1" onclick="setView('ch1')">CH1</button>
+      <button class="view-btn" id="btnViewCH2" onclick="setView('ch2')">CH2</button>
+      <button class="view-btn" id="btnViewGait" onclick="setView('gait')">Gait</button>
+      <div class="spacer"></div>
+      <span class="time-badge" id="timeDisplay">t = 0.000 s</span>
+      <span style="font-family:ui-monospace,Consolas,monospace;font-size:10px;color:var(--faint);" id="fpsDisplay">60 FPS</span>
+      <div style="display:flex;gap:2px;">
+        <button class="view-btn" onclick="changeTimeScale(-1)">&#8722;</button>
+        <span class="time-badge" id="timeScaleDisplay" style="font-size:9px;">5s</span>
+        <button class="view-btn" onclick="changeTimeScale(1)">+</button>
+      </div>
+      <button class="btn" id="btnMon" onclick="toggleMonitor()" style="font-size:10px;padding:4px 8px;">Preview: Monitor</button>
+      <button class="btn" id="btnCsv" onclick="toggleCSVMode()" style="font-size:10px;padding:4px 8px;">Preview: CSV</button>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="mainCanvas"></canvas>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-item">
+        <span class="status-label">CH1:</span>
+        <span class="status-val ch1" id="liveV1">0.000 V</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">CH2:</span>
+        <span class="status-val ch2" id="liveV2">0.000 V</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">State:</span>
+        <span class="status-val gait" id="liveState">SWING</span>
+      </div>
+      <div class="spacer"></div>
+      <div class="status-item">
+        <span class="status-label">Output:</span>
+        <div class="status-dot" id="statusDot"></div>
+        <span class="status-val" id="outputStatus" style="color:var(--ok);">ACTIVE</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Serial:</span>
+        <div class="status-dot off" id="serialDot"></div>
+        <span class="status-val" id="serialStatusText" style="color:var(--faint);">OFFLINE</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ RIGHT PANEL ════ -->
+  <div class="panel panel-right">
+
+    <!-- ESP32 Serial Connection -->
+    <div class="serial-card">
+      <div class="section-head">Device Connection</div>
+      <div class="serial-body">
+
+        <!-- Port Selector -->
+        <div class="port-row">
+          <label class="port-label">PORT</label>
+          <select id="serialPortSelect" class="port-select">
+            <option value="">— Scanning ports… —</option>
+          </select>
+          <button class="btn port-refresh" onclick="refreshPorts()" title="Refresh COM port list">Refresh</button>
+          <button class="btn port-refresh" onclick="scanNewPort()" title="Web Serial picker (browser fallback)">Scan</button>
+        </div>
+
+        <!-- Baud + Connect -->
+        <div class="port-row">
+          <label class="port-label">BAUD</label>
+          <select id="serialBaudSelect" class="port-select">
+            <option value="9600">9600</option>
+            <option value="19200">19200</option>
+            <option value="38400">38400</option>
+            <option value="57600">57600</option>
+            <option value="115200" selected>115200</option>
+            <option value="230400">230400</option>
+            <option value="460800">460800</option>
+            <option value="921600">921600</option>
+          </select>
+          <button class="btn btn-serial" id="btnSerialConnect" onclick="serialConnect()">Connect</button>
+        </div>
+
+        <!-- Status -->
+        <div class="serial-status" id="serialStatus">
+          <div class="dot"></div>
+          <span id="serialStatusMsg">Disconnected</span>
+        </div>
+
+        <!-- Device Controls (panel controls mirror automatically when connected) -->
+        <div class="esp-btn-grid" id="espControlBtns" style="display:none;">
+          <div class="esp-section-label">Device Output</div>
+          <div class="esp-btn-row">
+            <button class="btn esp-btn esp-start" onclick="sendQuickCmd('start')">Start</button>
+            <button class="btn esp-btn esp-stop" onclick="sendQuickCmd('stop')">Stop</button>
+            <button class="btn esp-btn" onclick="sendQuickCmd('zero')">Zero</button>
+            <button class="btn esp-btn" onclick="sendQuickCmd('reset')">Reset</button>
+          </div>
+          <div class="esp-section-label">Device Monitor</div>
+          <div class="esp-btn-row">
+            <button class="btn esp-btn" onclick="sendQuickCmd('mon')">Monitor</button>
+            <button class="btn esp-btn" onclick="sendQuickCmd('csv')">CSV</button>
+            <button class="btn esp-btn" onclick="sendQuickCmd('stats')">Stats</button>
+            <button class="btn esp-btn" onclick="sendQuickCmd('temp')">Temp</button>
+          </div>
+          <div class="esp-btn-row">
+            <button class="btn esp-btn" onclick="sendQuickCmd('status')">Status</button>
+            <button class="btn esp-btn" onclick="sendQuickCmd('save')">Save</button>
+            <button class="btn esp-btn" onclick="sendQuickCmd('load')">Load</button>
+          </div>
+        </div>
+
+        <!-- Terminal Log -->
+        <div class="serial-terminal" id="serialTerminal">
+          <div class="terminal-line info">Select a port and click Connect. Panel controls mirror to the device automatically.</div>
+        </div>
+
+        <!-- Command Input -->
+        <div class="serial-cmd-input">
+          <input type="text" id="serialCmdInput" placeholder="Type command..." onkeydown="if(event.key==='Enter')sendSerialCmd()">
+          <button class="btn btn-glow" onclick="sendSerialCmd()">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Data -->
+    <div class="live-data-card">
+      <div class="section-head">Live Output</div>
+      <div class="live-values">
+        <div class="live-box">
+          <div class="live-box-label ch1">CH1 Heel</div>
+          <div class="live-box-value ch1" id="liveV1Big">0.00</div>
+          <div class="live-box-unit">Volts</div>
+        </div>
+        <div class="live-box">
+          <div class="live-box-label ch2">CH2 Toe</div>
+          <div class="live-box-value ch2" id="liveV2Big">0.00</div>
+          <div class="live-box-unit">Volts</div>
+        </div>
+      </div>
+      <div class="live-src" id="liveSrc">Preview values &middot; connect a device to drive hardware output</div>
+      <div class="gait-phases-bar">
+        <div class="gait-phase-tag active" data-phase="0">SW</div>
+        <div class="gait-phase-tag" data-phase="1">LD</div>
+        <div class="gait-phase-tag" data-phase="2">MD</div>
+        <div class="gait-phase-tag" data-phase="3">TM</div>
+        <div class="gait-phase-tag" data-phase="4">PS</div>
+        <div class="gait-phase-tag" data-phase="5">ST</div>
+      </div>
+    </div>
+
+    <!-- Step Counter -->
+    <div class="steps-card">
+      <div class="section-head" style="padding-top:0;">Device Counters</div>
+      <div class="steps-grid">
+        <div class="step-item">
+          <div class="step-label">Steps</div>
+          <div class="step-value" id="stepCount">0</div>
+        </div>
+        <div class="step-item">
+          <div class="step-label">Cycles</div>
+          <div class="step-value" id="cycleCount">0</div>
+        </div>
+        <div class="step-item">
+          <div class="step-label">Temp</div>
+          <div class="step-value" id="tempDisplay" style="font-size:12px;">&mdash;</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════ HELP MODAL ═══════════════ -->
+<div class="modal-bg" id="helpModal">
+  <div class="modal-box">
+    <h3>Pedograph</h3>
+    <div class="help-section">
+      <h4>Overview</h4>
+      <p>Dual-channel waveform controller for the ESP32 load-cell simulator (DAC1&nbsp;=&nbsp;heel, DAC2&nbsp;=&nbsp;toe). The panel <strong>is</strong> the output: the preview graph shows the exact levels, and every control is mirrored to the connected ESP32 automatically. There is no separate demo mode.</p>
+    </div>
+    <div class="help-section">
+      <h4>Device connection</h4>
+      <ul>
+        <li>Select the ESP32 COM port and click <strong>Connect</strong> (115200 baud).</li>
+        <li>On connect, the full panel state is pushed to the device; every later change follows within a fraction of a second.</li>
+        <li>The <strong>Output Limits</strong> card shows the mirror state. Device responses appear in the terminal log.</li>
+        <li><strong>Save</strong> stores the device config in ESP32 flash; <strong>Load</strong> recalls it.</li>
+      </ul>
+    </div>
+    <div class="help-section">
+      <h4>Output ceiling</h4>
+      <p>The <strong>Ceiling</strong> setting (0.50&ndash;3.30&nbsp;V) clamps every value before display and before sending &mdash; amplitude, offsets, and gait Vmin/Vmax. The dashed line on the graph marks the ceiling.</p>
+    </div>
+    <div class="help-section">
+      <h4>Firmware notes</h4>
+      <ul>
+        <li><strong>Custom</strong> waveform is a panel preview only &mdash; the ESP32 firmware holds a flat offset for it.</li>
+        <li>Phase is sent in degrees. Duty applies to Square/PWM only.</li>
+        <li>Raw firmware commands can still be typed in the terminal input (e.g. <code>status</code>, <code>mon</code>, <code>csv</code>).</li>
+      </ul>
+    </div>
+    <div class="help-section">
+      <h4>Keyboard shortcuts</h4>
+      <ul>
+        <li><strong>Space</strong> &mdash; Start / pause output</li>
+        <li><strong>Escape</strong> &mdash; Stop output</li>
+        <li><strong>Ctrl+1&ndash;9</strong> &mdash; Presets (Walk through Test)</li>
+        <li><strong>Ctrl+R</strong> &mdash; Reset counters</li>
+        <li><strong>Ctrl+E</strong> &mdash; Export CSV</li>
+      </ul>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-glow" onclick="closeHelp()">Close</button>
+    </div>
+  </div>
+</div>
+<!-- ═══════════════ CSV MODAL ═══════════════ -->
+<div class="modal-bg" id="csvModal">
+  <div class="modal-box">
+    <h3>CSV Export</h3>
+    <textarea id="csvOutput" readonly></textarea>
+    <div class="modal-btns">
+      <button class="btn" onclick="copyCSV()">Copy</button>
+      <button class="btn btn-glow" onclick="downloadCSV()">Download</button>
+      <button class="btn" onclick="closeCSVModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   PEDOGRAPH v2.0 — ENGINE
+   Sim + ESP32 Serial Control
+   ═══════════════════════════════════════════════════════════ */
+
+const WAVE_SINE=0, WAVE_SQUARE=1, WAVE_TRIANGLE=2, WAVE_RAMP_UP=3,
+      WAVE_RAMP_DOWN=4, WAVE_PWM=5, WAVE_GAIT=6, WAVE_CUSTOM=7, WAVE_OFF=8;
+const WAVE_NAMES=['SINE','SQUARE','TRI','RAMP+','RAMP-','PWM','GAIT','CUSTOM','OFF'];
+const GAIT_NAMES=['SWING','LOAD','MID','TERM','PRESW','STANCE'];
+const GAIT_ALIASES=['swing','load','mid','term','pre','stance'];
+const GAIT_SWING=0,GAIT_LOADING=1,GAIT_MID_STANCE=2,GAIT_TERMINAL_STANCE=3,GAIT_PRE_SWING=4,GAIT_STANCE=5;
+const SAMPLE_RATE=1000;
+
+let running=true, monitorMode=false, csvMode=false, time=0;
+let viewMode='dual', timeScale=5, currentPreset='';
+let stepCount=0, cycleCount=0, prevSwing=false;
+let csvData=[]; const MAX_CSV=30000;
+
+let ch1={type:WAVE_GAIT,freq:0.91,amp:1.65,offset:1.65,duty:0.5,phase:0,enabled:true};
+let ch2={type:WAVE_GAIT,freq:0.91,amp:1.65,offset:1.65,duty:0.5,phase:0,enabled:true};
+let gait={period:1.1,swing:0.40,loading:0.10,mid:0.25,terminal:0.15,preSwing:0.10,vMin:0.2,vMax:3.0,ratio:0.6};
+
+const HLEN=2000;
+let ch1H=new Float32Array(HLEN), ch2H=new Float32Array(HLEN), gsH=new Uint8Array(HLEN);
+let hIdx=0, hCnt=0;
+
+// ─── Canvas ───
+const mainCanvas=document.getElementById('mainCanvas');
+const mainCtx=mainCanvas.getContext('2d');
+const p1c=document.getElementById('previewCh1');
+const p1x=p1c.getContext('2d');
+const p2c=document.getElementById('previewCh2');
+const p2x=p2c.getContext('2d');
+
+function resizeCanvas(){
+  const c=mainCanvas.parentElement;
+  const w=Math.max(1,Math.floor(c.clientWidth||1));
+  const h=Math.max(1,Math.floor(c.clientHeight||1));
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  const bw=w*dpr, bh=h*dpr;
+  if(mainCanvas.width!==bw||mainCanvas.height!==bh){
+    mainCanvas.width=bw; mainCanvas.height=bh;
+    mainCanvas._dpr=dpr; mainCanvas._glowGrad=null;
+  }
+}
+let _resizeT=null;
+addEventListener('resize',()=>{ clearTimeout(_resizeT); _resizeT=setTimeout(resizeCanvas,120); });
+resizeCanvas();
+
+// ─── Waveform Generators ───
+function genSine(c,t){ return c.offset+c.amp*Math.sin(2*Math.PI*c.freq*t+c.phase); }
+function genSquare(c,t){ let cy=((c.freq*t+c.phase/(2*Math.PI))%1+1)%1; return c.offset+(cy<c.duty?c.amp:-c.amp); }
+function genTriangle(c,t){ let cy=((c.freq*t+c.phase/(2*Math.PI))%1+1)%1; let v=cy<0.5?4*cy-1:3-4*cy; return c.offset+c.amp*v; }
+function genRampUp(c,t){ let cy=((c.freq*t+c.phase/(2*Math.PI))%1+1)%1; return c.offset+c.amp*(2*cy-1); }
+function genRampDown(c,t){ let cy=((c.freq*t+c.phase/(2*Math.PI))%1+1)%1; return c.offset+c.amp*(1-2*cy); }
+function genPWM(c,t){ return genSquare(c,t); }
+function genCustom(c,t){ let cy=((c.freq*t+c.phase/(2*Math.PI))%1+1)%1; return c.offset+c.amp*(Math.sin(2*Math.PI*cy)+0.3*Math.sin(2*Math.PI*3*cy+0.5)); }
+
+function genChannel(c,t){
+  if(!c.enabled||c.type===WAVE_OFF) return c.offset;
+  switch(c.type){
+    case WAVE_SINE:return genSine(c,t);case WAVE_SQUARE:return genSquare(c,t);
+    case WAVE_TRIANGLE:return genTriangle(c,t);case WAVE_RAMP_UP:return genRampUp(c,t);
+    case WAVE_RAMP_DOWN:return genRampDown(c,t);case WAVE_PWM:return genPWM(c,t);
+    case WAVE_CUSTOM:return genCustom(c,t);default:return c.offset;
+  }
+}
+
+function gaitShape(ph){
+  // Pure curve without noise / step-count side effects (for LUT + previews)
+  const S=gait.swing,L=gait.loading,M=gait.mid,T=gait.terminal,P=gait.preSwing;
+  let l1=0,l2=0,st=GAIT_SWING;
+  if(L<=0||M<=0||T<=0||P<=0||S<0){ return {l1:0,l2:0,state:st}; }
+  if(ph<S){st=GAIT_SWING;l1=0;l2=0;}
+  else if(ph<S+L){st=GAIT_LOADING;let p=(ph-S)/L;l1=p*p*0.8;l2=p*p*p*0.3;}
+  else if(ph<S+L+M){st=GAIT_MID_STANCE;let p=(ph-S-L)/M;l1=0.8-0.3*p;l2=0.3+0.6*p;}
+  else if(ph<S+L+M+T){st=GAIT_TERMINAL_STANCE;let p=(ph-S-L-M)/T;l1=0.5*(1-p);l2=0.9*(1-0.3*p);}
+  else{st=GAIT_PRE_SWING;let p=(ph-S-L-M-T)/P;l1=0;l2=0.6*(1-p);}
+  return {l1,l2,state:st};
+}
+let _gaitLUT=null,_gaitLUTKey='';
+function getGaitLUT(n){
+  const key=[gait.period,gait.swing,gait.loading,gait.mid,gait.terminal,gait.preSwing,gait.vMin,gait.vMax,gait.ratio,n].join('|');
+  if(_gaitLUT&&_gaitLUTKey===key) return _gaitLUT;
+  const v1=new Float32Array(n+1),v2=new Float32Array(n+1);
+  const span=Math.max(0.001,gait.vMax-gait.vMin);
+  for(let i=0;i<=n;i++){
+    const ph=i/n;
+    const s=gaitShape(ph);
+    v1[i]=Math.max(0,Math.min(3.3,gait.vMin+span*s.l1));
+    v2[i]=Math.max(0,Math.min(3.3,gait.vMin+span*s.l2*gait.ratio));
+  }
+  _gaitLUT={n,v1,v2}; _gaitLUTKey=key;
+  return _gaitLUT;
+}
+function genGaitCycle(t){
+  let ph=((t%gait.period)/gait.period+1)%1;
+  let l1=0,l2=0,st=GAIT_SWING;
+  const S=gait.swing,L=gait.loading,M=gait.mid,T=gait.terminal,P=gait.preSwing;
+  if(ph<S){st=GAIT_SWING;l1=0;l2=0;}
+  else if(ph<S+L){st=GAIT_LOADING;let p=(ph-S)/L;l1=p*p*0.8;l2=p*p*p*0.3;}
+  else if(ph<S+L+M){st=GAIT_MID_STANCE;let p=(ph-S-L)/M;l1=0.8-0.3*p;l2=0.3+0.6*p;}
+  else if(ph<S+L+M+T){st=GAIT_TERMINAL_STANCE;let p=(ph-S-L-M)/T;l1=0.5*(1-p);l2=0.9*(1-0.3*p);}
+  else{st=GAIT_PRE_SWING;let p=(ph-S-L-M-T)/P;l1=0;l2=0.6*(1-p);}
+  let inSw=(st===GAIT_SWING);
+  if(prevSwing&&!inSw){stepCount++;cycleCount++;}
+  prevSwing=inSw;
+  let v1=gait.vMin+(gait.vMax-gait.vMin)*l1;
+  let v2=gait.vMin+(gait.vMax-gait.vMin)*l2*gait.ratio;
+  v1+=(Math.random()*0.02-0.01); v2+=(Math.random()*0.02-0.01);
+  return{v1:Math.max(0,Math.min(3.3,v1)),v2:Math.max(0,Math.min(3.3,v2)),state:st};
+}
+
+// ─── UI Updates ───
+function updateChannel(ch){
+  let c=ch==='ch1'?ch1:ch2;
+  c.type=+document.getElementById(ch+'Type').value;
+  c.freq=+document.getElementById(ch+'Freq').value;
+  c.amp=+document.getElementById(ch+'Amp').value;
+  c.offset=+document.getElementById(ch+'Offset').value;
+  c.duty=+document.getElementById(ch+'Duty').value;
+  c.phase=+document.getElementById(ch+'Phase').value*Math.PI/180;
+  c.enabled=document.getElementById(ch+'Enabled').checked;
+  document.getElementById(ch+'FreqVal').innerHTML=c.freq.toFixed(2)+'<span class="unit"> Hz</span>';
+  document.getElementById(ch+'AmpVal').innerHTML=c.amp.toFixed(2)+'<span class="unit"> V</span>';
+  document.getElementById(ch+'OffsetVal').innerHTML=c.offset.toFixed(2)+'<span class="unit"> V</span>';
+  document.getElementById(ch+'DutyVal').textContent=c.duty.toFixed(2);
+  document.getElementById(ch+'PhaseVal').innerHTML=(c.phase*180/Math.PI).toFixed(0)+'<span class="unit">°</span>';
+  document.getElementById(ch+'Badge').textContent=WAVE_NAMES[c.type];
+  drawPreview(ch);
+  scheduleSync(ch);
+}
+
+function updateGait(){
+  gait.period=+document.getElementById('gaitPeriod').value;
+  gait.swing=+document.getElementById('gaitSwing').value;
+  gait.loading=+document.getElementById('gaitLoading').value;
+  gait.mid=+document.getElementById('gaitMid').value;
+  gait.terminal=+document.getElementById('gaitTerminal').value;
+  gait.preSwing=+document.getElementById('gaitPreSwing').value;
+  gait.vMin=+document.getElementById('gaitVmin').value;
+  gait.vMax=+document.getElementById('gaitVmax').value;
+  gait.ratio=+document.getElementById('gaitRatio').value;
+  document.getElementById('gaitPeriodVal').innerHTML=gait.period.toFixed(2)+'<span class="unit"> s</span>';
+  document.getElementById('gaitSwingVal').textContent=gait.swing.toFixed(2);
+  document.getElementById('gaitLoadingVal').textContent=gait.loading.toFixed(2);
+  document.getElementById('gaitMidVal').textContent=gait.mid.toFixed(2);
+  document.getElementById('gaitTerminalVal').textContent=gait.terminal.toFixed(2);
+  document.getElementById('gaitPreSwingVal').textContent=gait.preSwing.toFixed(2);
+  document.getElementById('gaitVminVal').innerHTML=gait.vMin.toFixed(2)+'<span class="unit"> V</span>';
+  document.getElementById('gaitVmaxVal').innerHTML=gait.vMax.toFixed(2)+'<span class="unit"> V</span>';
+  document.getElementById('gaitRatioVal').textContent=gait.ratio.toFixed(2);
+  scheduleSync('gait');
+}
+
+// ─── Presets ───
+function applyPreset(name){
+  currentPreset=name;
+  document.querySelectorAll('.preset').forEach(e=>e.classList.remove('active'));
+  let el=document.querySelector(`[data-preset="${name}"]`);
+  if(el)el.classList.add('active');
+  switch(name){
+    case'walk':setGait({period:1.1,swing:0.40,loading:0.10,mid:0.25,terminal:0.15,preSwing:0.10,vMin:0.2,vMax:3.0,ratio:0.6});setBothType(WAVE_GAIT);break;
+    case'run':setGait({period:0.6,swing:0.45,loading:0.08,mid:0.20,terminal:0.15,preSwing:0.12,vMin:0.1,vMax:3.2,ratio:0.5});setBothType(WAVE_GAIT);break;
+    case'limp':setGait({period:1.3,swing:0.35,loading:0.15,mid:0.25,terminal:0.15,preSwing:0.10,vMin:0.2,vMax:2.5,ratio:0.3});setBothType(WAVE_GAIT);break;
+    case'stair':setGait({period:1.5,swing:0.35,loading:0.12,mid:0.30,terminal:0.13,preSwing:0.10,vMin:0.3,vMax:3.1,ratio:0.7});setBothType(WAVE_GAIT);break;
+    case'climb':setGait({period:1.8,swing:0.30,loading:0.15,mid:0.35,terminal:0.12,preSwing:0.08,vMin:0.3,vMax:3.2,ratio:0.8});setBothType(WAVE_GAIT);break;
+    case'jog':setGait({period:0.5,swing:0.50,loading:0.06,mid:0.15,terminal:0.14,preSwing:0.15,vMin:0.05,vMax:3.3,ratio:0.45});setBothType(WAVE_GAIT);break;
+    case'stand':setBothType(WAVE_SINE);setBothParams(0.1,0.05,2.5);break;
+    case'sit':setBothType(WAVE_SINE);setBothParams(0.05,0.02,1.5);break;
+    case'test':ch1.type=WAVE_SINE;ch1.freq=1;ch1.amp=1;ch1.offset=1.65;ch1.enabled=true;ch2.type=WAVE_SQUARE;ch2.freq=2;ch2.amp=1;ch2.offset=1.65;ch2.enabled=true;syncUI();break;
+  }
+  // Mirror preset to ESP32 if connected (single command; values match firmware presets)
+  if(serialConnected){ syncHoldUntil=Date.now()+500; sendToESP('preset '+name,true); }
+}
+function setGait(g){Object.assign(gait,g);syncGaitUI();}
+function setBothType(t){ch1.type=ch2.type=t;ch1.enabled=ch2.enabled=t!==WAVE_OFF;syncChUI('ch1');syncChUI('ch2');}
+function setBothParams(f,a,o){ch1.freq=ch2.freq=f;ch1.amp=ch2.amp=a;ch1.offset=ch2.offset=o;syncChUI('ch1');syncChUI('ch2');}
+function syncChUI(ch){
+  let c=ch==='ch1'?ch1:ch2;
+  document.getElementById(ch+'Type').value=c.type;
+  document.getElementById(ch+'Freq').value=c.freq;
+  document.getElementById(ch+'Amp').value=c.amp;
+  document.getElementById(ch+'Offset').value=c.offset;
+  document.getElementById(ch+'Duty').value=c.duty;
+  document.getElementById(ch+'Phase').value=c.phase*180/Math.PI;
+  document.getElementById(ch+'Enabled').checked=c.enabled;
+  updateChannel(ch);
+}
+function syncUI(){syncChUI('ch1');syncChUI('ch2');}
+function syncGaitUI(){
+  document.getElementById('gaitPeriod').value=gait.period;
+  document.getElementById('gaitSwing').value=gait.swing;
+  document.getElementById('gaitLoading').value=gait.loading;
+  document.getElementById('gaitMid').value=gait.mid;
+  document.getElementById('gaitTerminal').value=gait.terminal;
+  document.getElementById('gaitPreSwing').value=gait.preSwing;
+  document.getElementById('gaitVmin').value=gait.vMin;
+  document.getElementById('gaitVmax').value=gait.vMax;
+  document.getElementById('gaitRatio').value=gait.ratio;
+  updateGait();
+}
+
+// ─── Theme (dark / light) ───
+function setTheme(t){
+  document.documentElement.dataset.theme=(t==='light')?'light':'dark';
+  try{ localStorage.setItem('fb-theme',document.documentElement.dataset.theme); }catch(e){}
+  const b=document.getElementById('btnTheme');
+  if(b) b.textContent='Theme: '+(document.documentElement.dataset.theme==='light'?'Light':'Dark');
+  _palCache=null; drawPreview('ch1'); drawPreview('ch2');
+}
+function toggleTheme(){
+  setTheme(document.documentElement.dataset.theme==='light'?'dark':'light');
+}
+
+// ─── Output ceiling: full-scale limit + hard clamp (ESP32 DAC ref is 3.3 V) ───
+let outputCeil=3.3;
+function clampOut(v){ v=+v; if(isNaN(v))return 0; return Math.max(0,Math.min(outputCeil,v)); }
+function updateCeiling(){
+  outputCeil=Math.max(0.5,Math.min(3.3,+document.getElementById('outCeil').value||3.3));
+  document.getElementById('outCeilVal').innerHTML=outputCeil.toFixed(2)+'<span class="unit"> V</span>';
+  drawPreview('ch1'); drawPreview('ch2');
+  scheduleSync('ch1'); scheduleSync('ch2'); scheduleSync('gait');
+}
+
+// ─── Serialized sender: multi-line bursts must not interleave ───
+let espQueue=Promise.resolve();
+async function _sendNow(cmd){
+  if(!serialConnected) return;
+  try{
+    if(serialMode==='electron'&&hasNativeSerial()){
+      const res=await window.espSerial.send(cmd);
+      if(!res||!res.ok) throw new Error((res&&res.error)||'write failed');
+      return;
+    }
+    if(!serialWriter) throw new Error('Serial writer not ready');
+    await serialWriter.write(new TextEncoder().encode(cmd+'\n'));
+  }catch(e){
+    addTerminal('error','Send failed: '+e.message);
+  }
+}
+
+// ─── Device mirror: panel is the single source of truth ───
+// Firmware accepts granular commands (robust) — phase in degrees, volts clamped.
+let syncHoldUntil=0, lastCustomWarn='';
+const _syncTimers={};
+function scheduleSync(kind){
+  if(!serialConnected) return;
+  if(Date.now()<syncHoldUntil) return;
+  clearTimeout(_syncTimers[kind]);
+  _syncTimers[kind]=setTimeout(()=>{
+    if(!serialConnected||Date.now()<syncHoldUntil) return;
+    if(kind==='ch1') pushChannel('ch1');
+    else if(kind==='ch2') pushChannel('ch2');
+    else pushGait();
+  },180);
+}
+function waveAlias(t){ return WAVE_NAMES[t].toLowerCase(); }
+async function pushChannel(ch){
+  const c=ch==='ch1'?ch1:ch2, n=ch==='ch1'?'1':'2';
+  if(c.type===WAVE_CUSTOM&&lastCustomWarn!==ch){
+    lastCustomWarn=ch;
+    addTerminal('info','Note: Custom waveform is panel preview only — device holds a flat offset for it.');
+  }
+  addTerminal('sent','> '+ch+' mirror');
+  await sendToESP('ch'+n+' type '+waveAlias(c.type));
+  await sendToESP('ch'+n+' freq '+c.freq.toFixed(3));
+  await sendToESP('ch'+n+' amp '+clampOut(c.amp).toFixed(3));
+  await sendToESP('ch'+n+' off '+clampOut(c.offset).toFixed(3));
+  await sendToESP('ch'+n+' duty '+c.duty.toFixed(2));
+  await sendToESP('ch'+n+' phase '+(c.phase*180/Math.PI).toFixed(1));
+  await sendToESP('ch'+n+(c.enabled&&c.type!==WAVE_OFF?' on':' off'));
+}
+async function pushGait(){
+  addTerminal('sent','> gait mirror');
+  await sendToESP('gait '+gait.period.toFixed(2)+' '+gait.swing.toFixed(2)+' '+gait.loading.toFixed(2)+' '+gait.mid.toFixed(2)+' '+gait.terminal.toFixed(2)+' '+gait.preSwing.toFixed(2));
+  await sendToESP('gait vmin '+clampOut(gait.vMin).toFixed(2));
+  await sendToESP('gait vmax '+clampOut(gait.vMax).toFixed(2));
+  await sendToESP('gait ratio '+gait.ratio.toFixed(2));
+}
+async function pushAllToDevice(){
+  if(!serialConnected) return;
+  syncHoldUntil=Date.now()+600;
+  addTerminal('info','Pushing panel state to device…');
+  await pushChannel('ch1');
+  await pushChannel('ch2');
+  await pushGait();
+  await sendToESP(running&&!zeroHold?'start':'stop');
+  syncHoldUntil=0;
+  addTerminal('info','Panel state mirrored to device.');
+}
+
+// ─── Output Controls (mirrored to device) ───
+let zeroHold=false;
+function setRunningUI(){
+  const os=document.getElementById('outputStatus');
+  const label=zeroHold?'ZEROED':(running?'ACTIVE':'STOPPED');
+  if(os){ os.textContent=label; os.style.color=(running&&!zeroHold)?'var(--ok)':'var(--danger)'; }
+  const dot=document.getElementById('statusDot');
+  if(dot) dot.className=(running&&!zeroHold)?'status-dot':'status-dot off';
+  const bs=document.getElementById('btnStart');
+  if(bs) bs.textContent=running?'PAUSE':'START';
+  const bz=document.getElementById('btnZero');
+  if(bz) bz.classList.toggle('active',zeroHold);
+}
+function toggleOutput(){ running=!running; if(running)zeroHold=false; setRunningUI(); if(serialConnected)sendToESP(running?'start':'stop'); }
+function stopOutput(){running=false; setRunningUI(); if(serialConnected)sendToESP('stop');}
+function zeroOutput(){
+  // Momentary 0 V hold (matches firmware `zero`: DACs zeroed, config kept)
+  zeroHold=!zeroHold;
+  setRunningUI();
+  if(serialConnected)sendToESP('zero');
+}
+function resetCounters(){time=0;stepCount=0;cycleCount=0;prevSwing=false;hCnt=0;hIdx=0;csvData=[]; if(serialConnected)sendToESP('reset');}
+function toggleMonitor(){monitorMode=!monitorMode;document.getElementById('btnMon').classList.toggle('active',monitorMode);}
+function toggleCSVMode(){csvMode=!csvMode;document.getElementById('btnCsv').classList.toggle('active',csvMode);}
+
+function setView(m){
+  viewMode=m;
+  document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+  const id='btnView'+m.charAt(0).toUpperCase()+m.slice(1);
+  const el=document.getElementById(id);
+  if(el)el.classList.add('active');
+}
+function changeTimeScale(d){
+  const s=[0.5,1,2,5,10,20,60];
+  let i=s.indexOf(timeScale);if(i<0)i=3;
+  i=Math.max(0,Math.min(s.length-1,i+d));
+  timeScale=s[i];
+  document.getElementById('timeScaleDisplay').textContent=timeScale+'s';
+}
+
+// ─── Preview Drawing (throttled via rAF) ───
+const _previewPending={ch1:false,ch2:false};
+function drawPreview(ch){
+  if(_previewPending[ch]) return;
+  _previewPending[ch]=true;
+  requestAnimationFrame(()=>{
+    _previewPending[ch]=false;
+    _drawPreviewNow(ch);
+  });
+}
+function _drawPreviewNow(ch){
+  let c=ch==='ch1'?ch1:ch2;
+  let ctx=ch==='ch1'?p1x:p2x;
+  let cv=ch==='ch1'?p1c:p2c;
+  const P0=pal();
+  let color=ch==='ch1'?P0.ch1:P0.ch2;
+  let w=cv.clientWidth||240,h=cv.clientHeight||32;
+  const bw=w*2,bh=h*2;
+  if(cv.width!==bw||cv.height!==bh){ cv.width=bw; cv.height=bh; }
+  ctx.setTransform(2,0,0,2,0,0);
+  ctx.clearRect(0,0,w,h);
+  if(c.type===WAVE_OFF||!c.enabled){ctx.strokeStyle=P0.faint;ctx.beginPath();ctx.moveTo(0,h/2);ctx.lineTo(w,h/2);ctx.stroke();return;}
+  ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.beginPath();
+  const freq=Math.max(0.01,c.freq||0.01);
+  const steps=Math.min(w,160);
+  for(let i=0;i<=steps;i++){
+    let t=(i/steps)*3/freq;
+    let v=clampOut(genChannel(c,t));
+    let y=h/2-(v-c.offset)/(c.amp||1)*(h/2-2);
+    y=Math.max(1,Math.min(h-1,y));
+    const x=(i/steps)*w;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+}
+
+// ─── Main Render Loop (fixed-timestep sim, throttled DOM) ───
+let lastFT=performance.now(),fc=0,fps=60,simInt=1000/SAMPLE_RATE,lastST=0,lastStatUpd=0;
+const elFps=()=>document.getElementById('fpsDisplay');
+
+function render(ts){
+  requestAnimationFrame(render);
+  fc++;
+  if(ts-lastFT>=1000){fps=fc;fc=0;lastFT=ts;const e=document.getElementById('fpsDisplay'); if(e)e.textContent=fps+' FPS';}
+  let dt=ts-lastST;
+  if(dt>=simInt){
+    if(dt>500){ lastST=ts; } // tab was hidden — skip catch-up to avoid spiral
+    else{
+      let steps=Math.floor(dt/simInt);
+      // 1000 Hz sim needs ~17 steps/frame @60fps; cap at 40 for real-time
+      steps=Math.min(steps,40);
+      for(let i=0;i<steps;i++)simStep();
+      lastST=ts-(dt%simInt);
+    }
+  }
+  drawMain(ts);
+  if(ts-lastStatUpd>100){ lastStatUpd=ts; updateLiveStats(); }
+}
+
+function simStep(){
+  if(!running)return;
+  time+=1/SAMPLE_RATE;
+  let v1,v2,state;
+  if(zeroHold){ v1=0; v2=0; state=GAIT_SWING; }
+  else{
+    let anyGait=(ch1.type===WAVE_GAIT||ch2.type===WAVE_GAIT);
+    if(anyGait){
+      let r=genGaitCycle(time);v1=r.v1;v2=r.v2;state=r.state;
+      if(ch1.type!==WAVE_GAIT)v1=genChannel(ch1,time);
+      if(ch2.type!==WAVE_GAIT)v2=genChannel(ch2,time);
+    }else{
+      v1=genChannel(ch1,time);v2=genChannel(ch2,time);state=GAIT_SWING;
+    }
+    // Output ceiling: clamp before history/display/send-equivalent
+    v1=clampOut(v1); v2=clampOut(v2);
+  }
+  ch1H[hIdx]=v1;ch2H[hIdx]=v2;gsH[hIdx]=state;
+  hIdx=(hIdx+1)%HLEN;if(hCnt<HLEN)hCnt++;
+  if(csvMode&&csvData.length<MAX_CSV)csvData.push({t:time.toFixed(3),v1:v1.toFixed(4),v2:v2.toFixed(4),state:GAIT_NAMES[state]});
+}
+
+let _palCache=null;
+function pal(){
+  if(_palCache) return _palCache;
+  const g=(n,f)=>{ try{ const v=getComputedStyle(document.documentElement).getPropertyValue(n).trim(); return v||f; }catch(e){ return f; } };
+  _palCache={ bg:g('--bg','#101418'), grid:g('--grid','rgba(148,163,184,0.10)'),
+    axis:g('--axistext','#7d8894'), ch1:g('--ch1','#4f8ff7'), ch2:g('--ch2','#e09145'),
+    ceil:g('--ceil','#d9a13b'), faint:g('--faint','#5d6875') };
+  return _palCache;
+}
+
+function drawMain(ts){
+  const dpr=mainCanvas._dpr||Math.min(2,window.devicePixelRatio||1);
+  let w=mainCanvas.width/dpr,h=mainCanvas.height/dpr;
+  if(!(w>0&&h>0))return;
+  mainCtx.setTransform(dpr,0,0,dpr,0,0);
+  mainCtx.clearRect(0,0,w,h);
+
+  mainCtx.fillStyle=pal().bg;mainCtx.fillRect(0,0,w,h);
+
+  let m={top:25,bottom:35,left:65,right:25};
+  let pw=w-m.left-m.right,ph=h-m.top-m.bottom;
+  if(pw<=0||ph<=0)return;
+
+  if(viewMode==='gait'){
+    drawGaitView(m,pw,ph,w,h);
+  }else{
+    drawWaveView(m,pw,ph,w,h);
+  }
+}
+
+function drawWaveView(m,pw,ph,w,h){
+  let ctx=mainCtx,vMin=0,vMax=3.3;
+  const P=pal(), MONO='10px ui-monospace, Consolas, monospace';
+
+  // Grid
+  for(let i=0;i<=8;i++){
+    let y=m.top+(ph*i/8);
+    ctx.strokeStyle=P.grid;ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(m.left,y);ctx.lineTo(m.left+pw,y);ctx.stroke();
+    let v=vMax-(vMax-vMin)*i/8;
+    ctx.fillStyle=P.axis;ctx.font=MONO;ctx.textAlign='right';
+    ctx.fillText(v.toFixed(2)+'V',m.left-8,y+3);
+  }
+
+  // Time grid
+  let ts=timeScale>10?5:timeScale>5?2:1;
+  for(let t=0;t<=timeScale;t+=ts){
+    let x=m.left+(t/timeScale)*pw;
+    ctx.strokeStyle=P.grid;ctx.beginPath();ctx.moveTo(x,m.top);ctx.lineTo(x,m.top+ph);ctx.stroke();
+    ctx.fillStyle=P.axis;ctx.font=MONO;ctx.textAlign='center';
+    ctx.fillText('+'+t+'s',x,m.top+ph+14);
+  }
+
+  // Output ceiling marker
+  if(outputCeil<3.3){
+    const cy=m.top+(1-outputCeil/3.3)*ph;
+    ctx.strokeStyle=P.ceil;ctx.lineWidth=1;ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.moveTo(m.left,cy);ctx.lineTo(m.left+pw,cy);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=P.ceil;ctx.font=MONO;ctx.textAlign='left';
+    ctx.fillText('CEIL '+outputCeil.toFixed(2)+'V',m.left+6,cy-4);
+  }
+
+  let vis=Math.min(hCnt,HLEN,Math.floor(timeScale*SAMPLE_RATE));
+  if(vis<2){ctx.fillStyle=P.faint;ctx.font='13px sans-serif';ctx.textAlign='center';ctx.fillText('Press START to begin output',w/2,h/2);return;}
+
+  // Decimate: never stroke more points than horizontal pixels
+  const stride=Math.max(1,Math.floor(vis/Math.max(1,Math.floor(pw))));
+  function buildPath(data){
+    ctx.beginPath();
+    let first=true;
+    const start=hIdx-vis;
+    for(let i=0;i<vis;i+=stride){
+      let hi=(start+i)%HLEN; if(hi<0)hi+=HLEN;
+      let v=data[hi];
+      let x=m.left+(i/vis)*pw;
+      let y=m.top+(1-(v-vMin)/(vMax-vMin))*ph;
+      y=y<m.top?m.top:(y>m.top+ph?m.top+ph:y);
+      if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y);
+    }
+  }
+  function drawLine(data,color,alpha,lw){
+    buildPath(data);
+    ctx.strokeStyle=color;ctx.globalAlpha=alpha;ctx.lineWidth=lw;
+    ctx.lineJoin='round';ctx.lineCap='round';
+    ctx.stroke();ctx.globalAlpha=1;
+  }
+
+  if(viewMode==='dual'||viewMode==='ch1'){
+    drawLine(ch1H,P.ch1,0.25,5);
+    drawLine(ch1H,P.ch1,1,1.8);
+  }
+  if(viewMode==='dual'||viewMode==='ch2'){
+    drawLine(ch2H,P.ch2,0.25,5);
+    drawLine(ch2H,P.ch2,1,1.8);
+  }
+
+  // Legend
+  ctx.font='600 11px sans-serif';ctx.textAlign='left';
+  if(viewMode==='dual'){
+    ctx.fillStyle=P.ch1;ctx.fillText('— CH1 Heel',m.left+10,m.top+14);
+    ctx.fillStyle=P.ch2;ctx.fillText('— CH2 Toe',m.left+120,m.top+14);
+  }
+}
+
+function drawGaitView(m,pw,ph,w,h){
+  let ctx=mainCtx;
+  const P=pal(), MONO='10px ui-monospace, Consolas, monospace';
+  ctx.fillStyle=P.axis;ctx.font='600 12px sans-serif';ctx.textAlign='center';
+  ctx.fillText('GAIT CYCLE PHASE BREAKDOWN',w/2,m.top+15);
+
+  let by=m.top+35,bh=44;
+  let total=gait.swing+gait.loading+gait.mid+gait.terminal+gait.preSwing;
+  if(total<=0)total=1;
+  let phases=[
+    {name:'SWING',frac:gait.swing,color:'#3d9a50'},
+    {name:'LOADING',frac:gait.loading,color:'#c08a2d'},
+    {name:'MID-STNCE',frac:gait.mid,color:'#3b6fd4'},
+    {name:'TERMINAL',frac:gait.terminal,color:'#cf4b4b'},
+    {name:'PRE-SWING',frac:gait.preSwing,color:'#8a63c9'}
+  ];
+  let x=m.left;
+  phases.forEach(p=>{
+    let pw2=(p.frac/total)*pw;
+    ctx.fillStyle=p.color;ctx.globalAlpha=0.55;
+    ctx.fillRect(x,by,pw2,bh);
+    ctx.globalAlpha=1;
+    ctx.strokeStyle=p.color;ctx.lineWidth=1;ctx.strokeRect(x,by,pw2,bh);
+    ctx.fillStyle='#fff';ctx.font='600 10px sans-serif';ctx.textAlign='center';
+    if(pw2>30)ctx.fillText(p.name,x+pw2/2,by+bh/2-2);
+    ctx.font='9px ui-monospace, Consolas, monospace';
+    ctx.fillText((p.frac*100).toFixed(0)+'%',x+pw2/2,by+bh/2+12);
+    x+=pw2;
+  });
+
+  let cy=by+bh+25,ch=ph-bh-55;
+  ctx.fillStyle=P.axis;ctx.font='11px sans-serif';ctx.textAlign='center';
+  ctx.fillText('Load Curves — Heel (CH1) vs Toe (CH2) — One Full Period',w/2,cy-6);
+
+  // Cached gait LUT: avoids 2000 genGaitCycle()+random calls per frame
+  const lut=getGaitLUT(256);
+  function strokeLUT(arr,mainColor,glowColor){
+    // glow pass + main pass share the same computed points
+    for(let pass=0;pass<2;pass++){
+      ctx.strokeStyle=pass===0?glowColor:mainColor;
+      ctx.lineWidth=pass===0?6:1.8;
+      ctx.lineJoin='round';ctx.lineCap='round';
+      ctx.beginPath();
+      for(let i=0;i<=lut.n;i++){
+        const v=arr[i];
+        let x=m.left+(i/lut.n)*pw;
+        let y=cy+(1-v/3.3)*ch;
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+  }
+  strokeLUT(lut.v1,P.ch1,'rgba(120,140,160,0.18)');
+  strokeLUT(lut.v2,P.ch2,'rgba(120,140,160,0.18)');
+
+  ctx.fillStyle=P.axis;ctx.font=MONO;ctx.textAlign='left';
+  ctx.fillText('3.3V',m.left-35,cy+8);ctx.fillText('0V',m.left-25,cy+ch);
+  ctx.textAlign='center';ctx.fillText('Period: '+gait.period.toFixed(2)+'s',m.left+pw/2,cy+ch+14);
+  ctx.font='600 11px sans-serif';ctx.textAlign='left';
+  ctx.fillStyle=P.ch1;ctx.fillText('— Heel (CH1)',m.left+10,cy+ch+28);
+  ctx.fillStyle=P.ch2;ctx.fillText('— Toe (CH2)',m.left+130,cy+ch+28);
+}
+
+let _liveEls=null,_phaseEls=null,_lastLiveKey='';
+function updateLiveStats(){
+  if(!hCnt)return;
+  if(!_liveEls){
+    _liveEls={
+      v1:document.getElementById('liveV1'), v2:document.getElementById('liveV2'),
+      st:document.getElementById('liveState'),
+      b1:document.getElementById('liveV1Big'), b2:document.getElementById('liveV2Big'),
+      td:document.getElementById('timeDisplay'),
+      sc:document.getElementById('stepCount'), cc:document.getElementById('cycleCount')
+    };
+    _phaseEls=Array.from(document.querySelectorAll('.gait-phase-tag'));
+  }
+  let li=(hIdx-1+HLEN)%HLEN;
+  let v1=ch1H[li],v2=ch2H[li],state=gsH[li];
+  // Round to display precision and skip DOM writes when unchanged
+  const k1=(v1*1000|0),k2=(v2*1000|0);
+  const key=k1+'|'+k2+'|'+state+'|'+stepCount+'|'+(time*10|0);
+  if(key===_lastLiveKey) return;
+  _lastLiveKey=key;
+  _liveEls.v1.textContent=v1.toFixed(3)+' V';
+  _liveEls.v2.textContent=v2.toFixed(3)+' V';
+  _liveEls.st.textContent=GAIT_NAMES[state]||'—';
+  _liveEls.b1.textContent=v1.toFixed(2);
+  _liveEls.b2.textContent=v2.toFixed(2);
+  _liveEls.td.textContent='t = '+time.toFixed(3)+' s';
+  _liveEls.sc.textContent=stepCount;
+  _liveEls.cc.textContent=cycleCount;
+  for(let i=0;i<_phaseEls.length;i++){
+    const el=_phaseEls[i];
+    const on=+el.dataset.phase===state;
+    if(on!==el.classList.contains('active')) el.classList.toggle('active',on);
+  }
+}
+
+// ─── ESP32 Serial Communication (Electron native + Web Serial fallback) ───
+let serialPort=null;
+let serialReader=null;
+let serialWriter=null;
+let serialConnected=false;
+let knownPorts=[];
+let serialMode='none'; // 'electron' | 'webserial' | 'none'
+const hasNativeSerial=()=>!!(window.espSerial&&window.espSerial.isElectron);
+function chipTag(s){
+  s=String(s||'').toLowerCase();
+  if(s.includes('1a86')||s.includes('ch340')||s.includes('wch'))return ' CH340';
+  if(s.includes('10c4')||s.includes('cp210'))return ' CP210x';
+  if(s.includes('0403')||s.includes('ftdi'))return ' FTDI';
+  if(s.includes('303a')||s.includes('esp32')||s.includes('espressif'))return ' ESP32';
+  if(s.includes('2341')||s.includes('2a03')||s.includes('arduino'))return ' Arduino';
+  if(s.includes('prolific')||s.includes('067b'))return ' PL2303';
+  if(s.includes('bluetooth')||s.includes('bthenum'))return ' BT';
+  return '';
+}
+function portLabel(p){
+  const base=p.path||p.friendlyName||'COM?';
+  const hint=p.friendlyName||p.manufacturer||'';
+  const tag=chipTag(base+' '+hint+' '+(p.pnpId||''));
+  return tag?(base+tag):(hint?(base+' — '+hint):base);
+}
+function setSerialUI(connected,baud){
+  document.getElementById('serialStatus').className='serial-status'+(connected?' connected':'');
+  document.getElementById('serialStatusMsg').textContent=connected?('Connected @ '+baud+' baud'):'Disconnected';
+  const btn=document.getElementById('btnSerialConnect');
+  btn.classList.toggle('connected',connected);
+  btn.textContent=connected?'Disconnect':'Connect';
+  btn.onclick=connected?serialDisconnect:serialConnect;
+  document.getElementById('serialDot').className=connected?'status-dot':'status-dot off';
+  const st=document.getElementById('serialStatusText');
+  st.textContent=connected?'ONLINE':'OFFLINE';
+  st.style.color=connected?'var(--ok)':'var(--faint)';
+  document.getElementById('espControlBtns').style.display=connected?'flex':'none';
+  document.getElementById('serialPortSelect').disabled=connected;
+  document.getElementById('serialBaudSelect').disabled=connected;
+  const pill=document.getElementById('mirrorPill'), pt=document.getElementById('mirrorPillText');
+  if(pill&&pt){
+    pill.classList.toggle('linked',!!connected);
+    pt.textContent=connected?('Mirroring to device @ '+baud+' baud'):'Standalone — connect a device to mirror output';
+  }
+  const ls=document.getElementById('liveSrc');
+  if(ls) ls.textContent=connected?'Live device output — panel mirrors to ESP32':'Preview values · connect a device to drive hardware output';
+}
+function handleIncomingLine(line){
+  line=String(line||'').trim();
+  if(!line)return;
+  addTerminal(line.startsWith('ERR:')?'error':'received',line);
+  let m=line.match(/t=\s*([\d.]+)\s*\|\s*V1=([\d.]+)\s*\|\s*V2=([\d.]+)\s*\|\s*(\w+)/);
+  if(m){
+    document.getElementById('liveV1').textContent=parseFloat(m[2]).toFixed(3)+' V';
+    document.getElementById('liveV2').textContent=parseFloat(m[3]).toFixed(3)+' V';
+    document.getElementById('liveV1Big').textContent=parseFloat(m[2]).toFixed(2);
+    document.getElementById('liveV2Big').textContent=parseFloat(m[3]).toFixed(2);
+  }
+  let s=line.match(/Steps:\s*(\d+).*Cycles:\s*(\d+)/);
+  if(s){ document.getElementById('stepCount').textContent=s[1]; document.getElementById('cycleCount').textContent=s[2]; }
+  else{
+    let s2=line.match(/steps\s*=\s*(\d+)/i);
+    if(s2) document.getElementById('stepCount').textContent=s2[1];
+  }
+  let tp=line.match(/Tempera\w*:\s*([-\d.]+)/i);
+  if(tp) document.getElementById('tempDisplay').textContent=parseFloat(tp[1]).toFixed(1)+' C';
+}
+
+// Refresh: Electron native list (all COM ports) with Web Serial fallback
+async function refreshPorts(){
+  let sel=document.getElementById('serialPortSelect');
+  let prevVal=sel.value;
+  // 1) Preferred: native list via main process — shows ALL system COM ports
+  if(hasNativeSerial()){
+    try{
+      sel.innerHTML='<option value="">— Scanning… —</option>';
+      const res=await window.espSerial.list();
+      if(!res||!res.ok) throw new Error((res&&res.error)||'list failed');
+      const ports=res.ports||[];
+      sel.innerHTML='<option value="">— Select COM Port ('+ports.length+' found) —</option>';
+      ports.forEach((p)=>{
+        let opt=document.createElement('option');
+        opt.value=p.path;
+        opt.textContent=portLabel(p);
+        opt.dataset.mode='electron';
+        sel.appendChild(opt);
+      });
+      if(prevVal){ sel.value=prevVal; }
+      // auto-select first non-Bluetooth USB serial if nothing chosen
+      if(!sel.value&&ports.length){
+        const usbFirst=ports.find(p=>!chipTag((p.path||'')+' '+(p.friendlyName||'')+' '+(p.pnpId||''))?.includes('BT'));
+        sel.value=(usbFirst||ports[0]).path;
+      }
+      addTerminal('info','Found '+ports.length+' COM port(s) via native serial.');
+      if(!ports.length) addTerminal('info','No COM ports found. Plug in ESP32 / install CH340-CP210x driver.');
+      return;
+    }catch(e){
+      addTerminal('error','Native port scan failed: '+e.message);
+      // fall through to Web Serial
+    }
+  }
+  // 2) Fallback: Web Serial previously-granted ports
+  if(!('serial' in navigator)){
+    sel.innerHTML='<option value="">— No serial support —</option>';
+    addTerminal('error','No serial support. Run the Electron app (npm start).');
+    return;
+  }
+  try{
+    let ports=await navigator.serial.getPorts();
+    sel.innerHTML='<option value="">— Select or SCAN —</option>';
+    if(ports.length>0){
+      ports.forEach((p,i)=>{
+        let info=p.getInfo();
+        let label='Port '+(i+1);
+        if(info.usbVendorId){
+          let vid=info.usbVendorId.toString(16).toUpperCase().padStart(4,'0');
+          let pid=info.usbProductId?info.usbProductId.toString(16).toUpperCase().padStart(4,'0'):'????';
+          let chip='';
+          if(info.usbVendorId===0x303A)chip=' ESP32-S2/S3';
+          else if(info.usbVendorId===0x10C4)chip=' CP210x';
+          else if(info.usbVendorId===0x1A86)chip=' CH340';
+          else if(info.usbVendorId===0x2341)chip=' Arduino';
+          else if(info.usbVendorId===0x2A03)chip=' Arduino';
+          label='USB'+chip+' [VID:'+vid+' PID:'+pid+']';
+        }
+        let opt=document.createElement('option');
+        opt.value=i;
+        opt.textContent=label;
+        opt.dataset.mode='webserial';
+        sel.appendChild(opt);
+      });
+      knownPorts=ports;
+      if(prevVal)sel.value=prevVal;
+      addTerminal('info','Found '+ports.length+' permitted port(s). Click SCAN for new devices.');
+    }else{
+      knownPorts=[];
+      addTerminal('info','No permitted ports yet. Click SCAN to grant access.');
+    }
+  }catch(e){
+    addTerminal('error','Port scan failed: '+e.message);
+  }
+}
+
+// SCAN: native re-scan, or Web Serial picker as fallback
+async function scanNewPort(){
+  if(hasNativeSerial()){ await refreshPorts(); return; }
+  if(!('serial' in navigator)){
+    addTerminal('error','Web Serial not supported.');
+    return;
+  }
+  try{
+    addTerminal('info','Opening port picker dialog...');
+    let port=await navigator.serial.requestPort();
+    knownPorts.push(port);
+    // Rebuild dropdown
+    let sel=document.getElementById('serialPortSelect');
+    let idx=knownPorts.length-1;
+    let info=port.getInfo();
+    let label='COM '+(idx+1);
+    if(info.usbVendorId){
+      let vid=info.usbVendorId.toString(16).toUpperCase().padStart(4,'0');
+      let chip='';
+      if(info.usbVendorId===0x303A)chip=' ESP32-S2/S3';
+      else if(info.usbVendorId===0x10C4)chip=' CP210x';
+      else if(info.usbVendorId===0x1A86)chip=' CH340';
+      else if(info.usbVendorId===0x2341)chip=' Arduino';
+      else if(info.usbVendorId===0x2A03)chip=' Arduino';
+      label='COM '+(idx+1)+chip+' [VID:'+vid+']';
+    }
+    let opt=document.createElement('option');
+    opt.value=idx;
+    opt.textContent=label;
+    sel.appendChild(opt);
+    sel.value=idx;
+    addTerminal('info','Port added: '+label);
+  }catch(e){
+    if(e.name!=='AbortError'){
+      addTerminal('error','Port selection failed: '+e.message);
+    }else{
+      addTerminal('info','Port selection cancelled.');
+    }
+  }
+}
+
+async function serialConnect(){
+  let sel=document.getElementById('serialPortSelect');
+  let baudSel=document.getElementById('serialBaudSelect');
+  let baud=parseInt(baudSel.value)||115200;
+  if(serialConnected){ await serialDisconnect(); return; }
+
+  // ── Path A: Electron native (shows ALL COM ports) ──
+  const selOpt=sel.selectedOptions&&sel.selectedOptions[0];
+  const sv=String(sel.value||'');
+  const looksNative=hasNativeSerial()&&(selOpt&&selOpt.dataset.mode==='electron'||sv.slice(0,3)==='COM'||sv.slice(0,5)==='/dev/');
+  if(hasNativeSerial()&&(looksNative||sel.value)){
+    if(!sel.value){ addTerminal('error','Select a COM port first, then Connect.'); return; }
+    try{
+      addTerminal('info','Connecting to '+sel.value+' @ '+baud+'…');
+      const res=await window.espSerial.connect(sel.value,baud);
+      if(!res||!res.ok) throw new Error((res&&res.error)||'connect failed');
+      serialConnected=true; serialMode='electron';
+      setSerialUI(true,baud);
+      document.getElementById('serialTerminal').innerHTML='';
+      addTerminal('info','Connected to '+sel.value+' @ '+baud+' baud (native)');
+      await pushAllToDevice();
+      addTerminal('info','Listening for firmware messages...');
+      return;
+    }catch(e){
+      addTerminal('error','Connection failed: '+e.message);
+      addTerminal('error','Tip: Close Arduino IDE / PuTTY / any other serial app first.');
+      serialConnected=false; serialMode='none';
+      setSerialUI(false);
+      return;
+    }
+  }
+
+  // ── Path B: Web Serial fallback ──
+  if(!('serial' in navigator)){
+    addTerminal('error','No serial support. Run the Electron app (npm start).');
+    addTerminal('info','Native bridge missing? Rebuild: npm install, then npm start.');
+    return;
+  }
+  if(sel.value!==''){
+    let idx=parseInt(sel.value);
+    if(isNaN(idx)||idx<0||idx>=knownPorts.length){
+      addTerminal('error','Invalid port selection. Click Refresh first.');
+      return;
+    }
+    serialPort=knownPorts[idx];
+  }else{
+    try{
+      addTerminal('info','Opening system port picker...');
+      serialPort=await navigator.serial.requestPort();
+      knownPorts.push(serialPort);
+      let idx=knownPorts.length-1;
+      let info=serialPort.getInfo();
+      let label='USB device';
+      if(info.usbVendorId){
+        let vid=info.usbVendorId.toString(16).toUpperCase().padStart(4,'0');
+        label='USB [VID:'+vid+']';
+      }
+      let opt=document.createElement('option');
+      opt.value=idx;opt.textContent=label;opt.dataset.mode='webserial';
+      sel.appendChild(opt);
+      sel.value=idx;
+    }catch(e){
+      if(e.name!=='AbortError')addTerminal('error','Port selection failed: '+e.message);
+      return;
+    }
+  }
+
+  try{
+    if(serialPort.readable||serialPort.writable){
+      try{await serialPort.close();}catch(x){}
+    }
+    await serialPort.open({baudRate:baud});
+    serialConnected=true; serialMode='webserial';
+    setSerialUI(true,baud);
+
+    serialWriter=serialPort.writable.getWriter();
+    const decoder=new TextDecoderStream();
+    serialPort.readable.pipeTo(decoder.writable).catch(()=>{});
+    serialReader=decoder.readable.getReader();
+
+    let term=document.getElementById('serialTerminal');
+    term.innerHTML='';
+    addTerminal('info','Connected @ '+baud+' baud');
+    await pushAllToDevice();
+    addTerminal('info','Listening for firmware messages...');
+
+    readSerialLoop();
+  }catch(e){
+    addTerminal('error','Connection failed: '+e.message);
+    addTerminal('error','Tip: Close Arduino IDE / PuTTY / any other serial app first.');
+    serialPort=null; serialMode='none';
+    setSerialUI(false);
+  }
+}
+
+async function readSerialLoop(){
+  while(serialConnected&&serialMode==='webserial'&&serialReader){
+    try{
+      const{value,done}=await serialReader.read();
+      if(done)break;
+      let lines=value.split('\n').filter(l=>l.trim());
+      lines.forEach(line=>handleIncomingLine(line));
+    }catch(e){
+      if(serialConnected)addTerminal('error','Read error: '+e.message);
+      break;
+    }
+  }
+  if(serialConnected&&serialMode==='webserial'){
+    addTerminal('info','Connection lost.');
+    serialDisconnect();
+  }
+}
+
+async function serialDisconnect(){
+  if(serialMode==='electron'&&hasNativeSerial()){
+    try{ await window.espSerial.disconnect(); }catch(e){}
+  }
+  serialConnected=false; serialMode='none';
+  if(serialReader){try{serialReader.releaseLock();}catch(e){}serialReader=null;}
+  if(serialWriter){try{serialWriter.releaseLock();}catch(e){}serialWriter=null;}
+  if(serialPort){
+    try{ if(serialPort.readable) await serialPort.readable.cancel().catch(()=>{}); }catch(e){}
+    try{ await serialPort.close().catch(()=>{}); }catch(e){}
+    serialPort=null;
+  }
+  setSerialUI(false);
+  addTerminal('info','Disconnected from ESP32');
+}
+
+async function sendSerialCmd(){
+  let input=document.getElementById('serialCmdInput');
+  let cmd=input.value.trim();
+  if(!cmd)return;
+  input.value='';
+  if(!serialConnected){ addTerminal('error','Not connected. Connect first.'); return; }
+  await sendToESP(cmd,true);
+}
+
+async function sendQuickCmd(cmd){
+  if(!serialConnected){ addTerminal('error','Not connected. Connect first.'); return; }
+  await sendToESP(cmd,true);
+}
+
+function sendToESP(cmd,echo){
+  if(echo) addTerminal('sent','> '+cmd);
+  espQueue=espQueue.then(()=>_sendNow(cmd)).catch(()=>{});
+  return espQueue;
+}
+
+function addTerminal(type,msg){
+  let term=document.getElementById('serialTerminal');
+  let line=document.createElement('div');
+  line.className='terminal-line '+type;
+  line.textContent=msg;
+  term.appendChild(line);
+  term.scrollTop=term.scrollHeight;
+  // Keep last 200 lines
+  while(term.children.length>200)term.removeChild(term.firstChild);
+}
+
+// ─── Manual push (auto-mirror normally covers this) ───
+async function syncCH1ToESP(){ await pushChannel('ch1'); }
+async function syncCH2ToESP(){ await pushChannel('ch2'); }
+async function syncGaitToESP(){ await pushGait(); }
+async function syncAllToESP(){ await pushAllToDevice(); }
+
+// ─── CSV Export ───
+function exportCSV(){
+  let h='time_s,ch1_V,ch2_V,gait_state\n';
+  let r=csvData.map(d=>`${d.t},${d.v1},${d.v2},${d.state}`).join('\n');
+  document.getElementById('csvOutput').value=h+r;
+  document.getElementById('csvModal').classList.add('show');
+}
+function copyCSV(){
+  const ta=document.getElementById('csvOutput');
+  const done=()=>addTerminal('info','CSV copied to clipboard');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ta.value).then(done).catch(()=>{ ta.select(); document.execCommand('copy'); done(); });
+  }else{ ta.select(); document.execCommand('copy'); done(); }
+}
+function downloadCSV(){
+  let c=document.getElementById('csvOutput').value;
+  let b=new Blob([c],{type:'text/csv'});
+  let u=URL.createObjectURL(b);
+  let a=document.createElement('a');a.href=u;
+  a.download='pedograph_'+new Date().toISOString().slice(0,19).replace(/:/g,'-')+'.csv';
+  a.click();URL.revokeObjectURL(u);
+}
+function closeCSVModal(){document.getElementById('csvModal').classList.remove('show');}
+
+// ─── Help ───
+function showHelp(){document.getElementById('helpModal').classList.add('show');}
+function closeHelp(){document.getElementById('helpModal').classList.remove('show');}
+document.querySelectorAll('.modal-bg').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('show');});});
+
+// ─── Device temperature arrives via `temp` responses ───
+
+// ─── Keyboard Shortcuts ───
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
+  if(e.code==='Space'){e.preventDefault();toggleOutput();}
+  if(e.code==='Escape')stopOutput();
+  if(e.ctrlKey&&e.key>='1'&&e.key<='9'){
+    e.preventDefault();
+    const presets=['walk','run','jog','limp','stair','climb','stand','sit','test'];
+    applyPreset(presets[+e.key-1]);
+  }
+  if(e.ctrlKey&&e.key==='r'){e.preventDefault();resetCounters();}
+  if(e.ctrlKey&&e.key==='e'){e.preventDefault();exportCSV();}
+});
+
+// ─── Init ───
+try{
+  const saved=localStorage.getItem('fb-theme');
+  document.documentElement.dataset.theme=(saved==='light')?'light':'dark';
+}catch(e){}
+syncUI();syncGaitUI();updateCeiling();setRunningUI();
+setTheme(document.documentElement.dataset.theme||'dark');
+requestAnimationFrame(render);
+// Native serial events (Electron) — route incoming lines to terminal/parser
+if(hasNativeSerial()){
+  try{
+    window.espSerial.onData((line)=>{ if(serialConnected&&serialMode==='electron') handleIncomingLine(line); });
+    window.espSerial.onClosed(()=>{
+      if(serialConnected&&serialMode==='electron'){
+        addTerminal('info','Connection lost.');
+        serialConnected=false; serialMode='none';
+        setSerialUI(false);
+      }
+    });
+    addTerminal('info','Native serial bridge ready (Electron).');
+  }catch(e){ addTerminal('error','Bridge init failed: '+e.message); }
+}else{
+  addTerminal('info','Running without Electron bridge — using Web Serial fallback.');
+  addTerminal('info','Tip: run via `npm start` or the packaged exe for full COM list.');
+}
+// Auto-scan: native first, Web Serial fallback
+refreshPorts();
+// Retry once after 2.5s in case the bridge/driver enumerates late
+setTimeout(()=>{ try{ const sel=document.getElementById('serialPortSelect'); if(sel&&sel.options.length<=1) refreshPorts(); }catch(e){} },2500);
+// Re-scan when devices are plugged/unplugged (Web Serial)
+try{
+  if('serial' in navigator){
+    navigator.serial.addEventListener('connect',()=>refreshPorts());
+    navigator.serial.addEventListener('disconnect',()=>refreshPorts());
+  }
+}catch(e){}
+</script>
+</body>
+</html>

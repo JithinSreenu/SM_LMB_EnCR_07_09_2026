@@ -1,0 +1,78 @@
+{
+  "name": "pedograph",
+  "version": "2.0.0",
+  "description": "Pedograph Dual-Channel Waveform Console v2.0 — ESP32 Load Cell Simulator",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win portable",
+    "build-installer": "electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "com.pedograph.console",
+    "productName": "Pedograph",
+    "directories": {
+      "output": "dist"
+    },
+    "asar": true,
+    "npmRebuild": false,
+    "asarUnpack": [
+      "**/*.node"
+    ],
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "package.json",
+      "assets/icon.png",
+      "assets/icon.ico",
+      "node_modules/serialport/**/*",
+      "node_modules/@serialport/**/*",
+      "node_modules/node-gyp-build/**/*",
+      "node_modules/debug/**/*",
+      "node_modules/ms/**/*",
+      "!node_modules/serialport/{src,test,tsconfig*,*.md}",
+      "!node_modules/@serialport/*/src",
+      "!**/*.map"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon"
+    },
+    "portable": {
+      "artifactName": "Pedograph-${version}-Portable.exe"
+    },
+    "nsis": {
+      "artifactName": "Pedograph-${version}-Setup.exe",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Pedograph"
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "allowScripts": {
+    "electron@33.4.11": true
+  },
+  "dependencies": {
+    "serialport": "^13.0.0",
+    "@serialport/parser-readline": "^13.0.0"
+  }
+}
